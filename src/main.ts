@@ -1,7 +1,7 @@
 import "sanitize.css"
 import styles from "./style.module.scss"
 import { Vector2 } from "./Vector2"
-import { genPolygon } from "./polygon/genPolygon"
+import { genPolygon } from "./genPolygon"
 import {
   Scene,
   Mesh,
@@ -79,9 +79,9 @@ function genMeshesBtwTwoPathes(path1: number[], path2: number[]) {
     return new Promise((resolve) => setTimeout(resolve, ms))
   }
   const divisions = 6
-  const depth = 2
+  const depth = 3
   const { triangles, outline, } = genPolygon(divisions, depth)
-  const pointsForDraw = outline.map((v) => new Vector2(v.x * canvasSize + canvasSize / 2, v.y * canvasSize + canvasSize / 2))
+  const pointsForDraw = outline.map((v) => new Vector2(v.x * canvasSize + canvasSize / 2, - v.y * canvasSize + canvasSize / 2))
   await drawClosedPath(ctx, pointsForDraw, 3, "white")
   for (const p of pointsForDraw) {
     drawCircle(ctx, p, 5, "white")
@@ -162,17 +162,16 @@ function genMeshesBtwTwoPathes(path1: number[], path2: number[]) {
     edgeTris.push(...triangles)
   }
 
-  const allPoints = frontPoints.concat(backPoints).concat(edgePoints.flat()).flat()
-  const allIndices = frontTris.concat(backTris).concat(edgeTris).flat()
+  const allPoints = frontPoints.concat(backPoints).concat(edgePoints.flat())
+  const allIndices = frontTris.concat(backTris).concat(edgeTris)
   const allUvs = [] as number[][]
-  console.log(outline)
   for (let i = 0; i < edgeDivisions + 1; i++) {
-    allUvs.push(...outline.map((v) => [v.x + 0.5, -v.y + 0.5]))
+    allUvs.push(...outline.map((v) => [v.x + 0.5, v.y + 0.5]))
   }
 
   const geometry = new BufferGeometry()
-  const vertices = new Float32Array(allPoints)
-  const indices = new Uint32Array(allIndices)
+  const vertices = new Float32Array(allPoints.flat())
+  const indices = new Uint32Array(allIndices.flat())
   const uvs = new Float32Array(allUvs.flat())
   geometry.setAttribute("position", new BufferAttribute(vertices, 3))
   geometry.setIndex(new BufferAttribute(indices, 1))
